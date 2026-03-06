@@ -1,0 +1,12 @@
+.vscode
+node_modules
+public
+./src-tauri
+.gitignore
+.components.json
+package.json
+package-lock.json
+README.md
+tsconfig.json
+tsconfig.node.json
+vite.config.ts
