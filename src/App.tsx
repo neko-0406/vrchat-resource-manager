@@ -1,5 +1,12 @@
 import './App.css';
+import AppSideBar from './components/app/AppSideBar';
+import { SidebarProvider, useSidebar } from './components/ui/sidebar';
 
 export default function App() {
-  return <div className='bg-blue-300'>aiueo</div>;
+  // const { state, setOpen } = useSidebar();
+  return (
+    <SidebarProvider defaultOpen={true} >
+      <AppSideBar />
+    </SidebarProvider>
+  );
 }
