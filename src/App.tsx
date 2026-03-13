@@ -12,9 +12,9 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path='/' element={<AppLayout />}>
-          <Route path='assets' element={<AssetPage/>} />
-          <Route path='register' element={<AssetRegisterPage/>} />
-          <Route path='setting' element={<AppSettingPage/>} />
+          <Route path='assets' element={<AssetPage />} />
+          <Route path='register' element={<AssetRegisterPage />} />
+          <Route path='setting' element={<AppSettingPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

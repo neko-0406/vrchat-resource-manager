@@ -5,7 +5,7 @@ import { SidebarInset, SidebarProvider } from '../components/ui/sidebar';
 
 export default function AppLayout() {
   return (
-    <SidebarProvider defaultOpen={false} >
+    <SidebarProvider defaultOpen={false}>
       <AppSideBar />
       <SidebarInset>
         <Outlet />
