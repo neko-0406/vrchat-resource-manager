@@ -1,11 +1,22 @@
+import { BrowserRouter } from 'react-router';
 import './App.css';
-import AppSideBar from './components/app/AppSideBar';
-import { SidebarProvider } from './components/ui/sidebar';
+import { Routes } from 'react-router';
+import { Route } from 'react-router';
+import AppLayout from './layout/AppLayout';
+import AssetPage from './page/AssetPage';
+import AssetRegisterPage from './page/AssetRegisterPage';
+import AppSettingPage from './page/AppSettingPage';
 
 export default function App() {
   return (
-    <SidebarProvider defaultOpen={false} >
-      <AppSideBar />
-    </SidebarProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route path='/' element={<AppLayout />}>
+          <Route path='assets' element={<AssetPage/>} />
+          <Route path='register' element={<AssetRegisterPage/>} />
+          <Route path='setting' element={<AppSettingPage/>} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }

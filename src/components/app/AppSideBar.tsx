@@ -10,25 +10,25 @@ export interface MenuItem {
 
 const menuItems: MenuItem[] = [
   {
-    title: "アセット",
-    url: "/",
+    title: "アセット一覧",
+    url: "assets",
     icon: Shirt
   },
   {
-    title: "登録",
-    url: "/register",
+    title: "アセット登録",
+    url: "register",
     icon: PackagePlus
   },
   {
-    title: "設定",
-    url: "/setting",
+    title: "アプリ設定",
+    url: "setting",
     icon: Settings
   }
 ]
 
 export default function AppSideBar(): ReactNode {
   
-  const { setOpen } = useSidebar();
+  const { setOpen, open } = useSidebar();
   
   return (
     <Sidebar
@@ -38,7 +38,20 @@ export default function AppSideBar(): ReactNode {
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <SidebarHeader>Index</SidebarHeader>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton>
+              {/*アプリアイコン*/}
+              <div></div>
+              {
+                // 開閉状態に応じて表示・非表示切り替え
+                open && (<div><span>VRChat<br/>Resource-Manager</span></div>)
+              }
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
@@ -46,9 +59,9 @@ export default function AppSideBar(): ReactNode {
               menuItems.map(item => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
-                    <a href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
+                    <a href={item.url} className='py-6'>
+                      <item.icon className='size-6!' />
+                      <span className='text-base font-medium'>{item.title}</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
