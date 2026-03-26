@@ -105,11 +105,51 @@ export default function AssetRegisterPage() {
     }
   };
 
+  // アセット登録処理
+  const handleRegister = async () => {
+    if (!assetInfo.name || isFetching) return;
+
+    try {
+      await invoke('register_asset', {
+        request: {
+          name: assetInfo.name,
+          description: assetInfo.description,
+          shop_name: assetInfo.shopName,
+          category: assetInfo.category,
+          version: assetInfo.version,
+          original_url: assetUrl,
+          thumbnail_base64: thumbnailBase64,
+          tags: assetInfo.tags,
+          file_paths: files,
+        },
+      });
+
+      alert('アセットを登録しました。');
+      
+      // 入力をリセット
+      setAssetUrl('');
+      setThumbnailBase64(null);
+      setAssetInfo({
+        name: '',
+        shopName: '',
+        category: '',
+        description: '',
+        version: '',
+        tags: [],
+      });
+      setFiles([]);
+    } catch (error) {
+      console.error('Failed to register asset:', error);
+      alert('登録に失敗しました。');
+    }
+  };
+
   return (
     <div className='flex h-full max-h-screen flex-col overflow-hidden p-8 gap-6'>
       <div className='flex items-center justify-between shrink-0'>
         <h1 className='text-3xl font-bold'>アセット登録</h1>
-        <Button size='lg' disabled={!assetInfo.name}>
+        <Button size='lg' disabled={!assetInfo.name || isFetching} onClick={handleRegister}>
+          {isFetching ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
           アセットを登録
         </Button>
       </div>

@@ -1,8 +1,10 @@
 mod app_setting;
+mod asset;
 mod booth;
 mod db;
 
 use crate::app_setting::AppSetting;
+use crate::asset::register_asset;
 use crate::booth::scrape_booth;
 use crate::db::init_db;
 use sqlx::{Pool, Sqlite};
@@ -51,7 +53,7 @@ pub fn run() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_config, save_config, scrape_booth])
+        .invoke_handler(tauri::generate_handler![get_config, save_config, scrape_booth, register_asset])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
