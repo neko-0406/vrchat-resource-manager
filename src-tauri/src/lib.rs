@@ -1,10 +1,15 @@
 mod app_setting;
+mod db;
+
 use crate::app_setting::AppSetting;
+use crate::db::init_db;
+use sqlx::{Pool, Sqlite};
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager, State};
 
 pub struct AppState {
     pub config: Mutex<AppSetting>,
+    pub db: Pool<Sqlite>,
 }
 
 #[tauri::command]
@@ -29,10 +34,18 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            let handle = app.handle().clone();
+
+            // DBの初期化（非同期実行を同期的に待機）
+            let pool = tauri::async_runtime::block_on(async {
+                init_db(&handle).await.expect("failed to initialize database")
+            });
+
             // 起動時にファイルを読み込み
             let config = AppSetting::load(app.handle());
             app.manage(AppState {
                 config: Mutex::new(config),
+                db: pool,
             });
             Ok(())
         })
