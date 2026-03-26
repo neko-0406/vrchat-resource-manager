@@ -213,7 +213,7 @@ export default function AssetRegisterPage() {
               <Label htmlFor='description'>説明</Label>
               <Textarea
                 id='description'
-                rows={4}
+                rows={8}
                 value={assetInfo.description}
                 onChange={(e) => setAssetInfo({ ...assetInfo, description: e.target.value })}
                 placeholder='アセットに関するメモ'
