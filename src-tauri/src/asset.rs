@@ -86,16 +86,44 @@ pub async fn register_asset(
     }
 
     // 6. ファイルの処理
+    let config = state.config.lock().unwrap();
+    let base_path = &config.asset_data_folder;
+
+    if base_path.is_empty() {
+        return Err("アセット保存先フォルダが設定されていません。アプリ設定から設定してください。".to_string());
+    }
+
+    // アセットごとの保存ディレクトリ作成
+    let asset_dir = std::path::Path::new(base_path).join(&asset_id);
+    if !asset_dir.exists() {
+        std::fs::create_dir_all(&asset_dir).map_err(|e| e.to_string())?;
+    }
+
     for path in request.file_paths {
-        let file_name = std::path::Path::new(&path)
+        // コピー先ファイル名の生成 (UUID.zip)
+        let file_uuid = Uuid::new_v4().to_string();
+        let extension = std::path::Path::new(&path)
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("zip");
+        let new_file_name = format!("{}.{}", file_uuid, extension);
+        let dest_path = asset_dir.join(&new_file_name);
+
+        // 元のファイル名（表示用）
+        let original_file_name = std::path::Path::new(&path)
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("unknown")
             .to_string();
 
+        // ファイルをコピー
+        std::fs::copy(&path, &dest_path).map_err(|e| format!("ファイルのコピーに失敗しました: {}", e))?;
+
+        // DBにはコピー後のフルパスと元のファイル名を保存
+        let dest_path_str = dest_path.to_string_lossy().to_string();
         let result = sqlx::query("INSERT INTO files (file_path, file_name) VALUES (?, ?)")
-            .bind(&path)
-            .bind(file_name)
+            .bind(&dest_path_str)
+            .bind(original_file_name)
             .execute(&mut *tx)
             .await
             .map_err(|e| e.to_string())?;
