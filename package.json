@@ -1,5 +1,5 @@
 {
-  "name": "vrchat-resouce-manager",
+  "name": "vrchat-resource-manager",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -13,6 +13,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
     "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-opener": "^2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
