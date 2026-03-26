@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    vrchat_resouce_manager_lib::run()
+    vrchat_resource_manager_lib::run()
 }
