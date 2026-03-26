@@ -54,8 +54,8 @@ export default function AssetRegisterPage() {
   };
 
   return (
-    <div className='flex h-full flex-col p-8 gap-6'>
-      <div className='flex items-center justify-between'>
+    <div className='flex h-full max-h-screen flex-col overflow-hidden p-8 gap-6'>
+      <div className='flex items-center justify-between shrink-0'>
         <h1 className='text-3xl font-bold'>アセット登録</h1>
         <Button size='lg' disabled={!assetInfo.name}>
           アセットを登録
@@ -63,7 +63,7 @@ export default function AssetRegisterPage() {
       </div>
 
       {/* URL入力エリア */}
-      <Card className='bg-muted/50'>
+      <Card className='bg-muted/50 shrink-0'>
         <CardContent className='pt-6'>
           <div className='flex gap-2 items-end'>
             <div className='grid gap-2 flex-1'>
@@ -87,10 +87,10 @@ export default function AssetRegisterPage() {
         </CardContent>
       </Card>
 
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1 min-h-0'>
         {/* 左側: 画像プレビュー */}
-        <div className='flex flex-col gap-4'>
-          <Label>サムネイル画像</Label>
+        <div className='flex flex-col gap-4 min-h-0'>
+          <Label shrink-0>サムネイル画像</Label>
           <div
             className='relative aspect-square w-full overflow-hidden rounded-xl border-2 border-dashed border-muted bg-muted/20 flex items-center justify-center cursor-pointer hover:bg-muted/30 transition-colors'
             onClick={handleSelectImage}
@@ -108,13 +108,13 @@ export default function AssetRegisterPage() {
               </div>
             )}
           </div>
-          <Button variant='outline' onClick={handleSelectImage}>
+          <Button variant='outline' onClick={handleSelectImage} className='shrink-0'>
             画像をアップロード
           </Button>
         </div>
 
         {/* 右側: アセット情報フォーム */}
-        <div className='flex flex-col gap-6 overflow-y-auto pr-2'>
+        <div className='flex flex-col gap-6 overflow-y-auto px-1 pr-4'>
           <div className='grid gap-4'>
             <div className='grid gap-2'>
               <Label htmlFor='name'>アセット名</Label>
