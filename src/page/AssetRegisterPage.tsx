@@ -4,11 +4,22 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Card, CardContent } from '../components/ui/card';
-import { Image as ImageIcon, Link, Search, X, Package } from 'lucide-react';
+import { Image as ImageIcon, Link, Search, X, Package, Loader2 } from 'lucide-react';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { invoke } from '@tauri-apps/api/core';
+
+interface ScrapedBoothInfo {
+  name: string;
+  description: string;
+  shop_name: string;
+  category: string;
+  thumbnail_base64: string | null;
+  tags: string[];
+}
 
 export default function AssetRegisterPage() {
   const [assetUrl, setAssetUrl] = useState('');
+  const [isFetching, setIsFetching] = useState(false);
   const [thumbnailBase64, setThumbnailBase64] = useState<string | null>(null);
   const [assetInfo, setAssetInfo] = useState({
     name: '',
@@ -19,12 +30,53 @@ export default function AssetRegisterPage() {
     tags: [] as string[],
   });
   const [files, setFiles] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState('');
 
-  // TODO: スクレイピングによる情報取得の呼び出し
+  // タグの追加
+  const handleAddTag = () => {
+    const trimmedTag = newTag.trim();
+    if (!trimmedTag || assetInfo.tags.includes(trimmedTag)) return;
+    setAssetInfo({
+      ...assetInfo,
+      tags: [...assetInfo.tags, trimmedTag],
+    });
+    setNewTag('');
+  };
+
+  // タグの削除
+  const handleRemoveTag = (tagToRemove: string) => {
+    setAssetInfo({
+      ...assetInfo,
+      tags: assetInfo.tags.filter((tag) => tag !== tagToRemove),
+    });
+  };
+
+  // スクレイピングによる情報取得
   const handleFetchInfo = async () => {
-    if (!assetUrl) return;
-    console.log('Fetching info from:', assetUrl);
-    // 今後ここにinvoke('scrape_booth', { url: assetUrl })などを実装予定
+    if (!assetUrl || isFetching) return;
+
+    setIsFetching(true);
+    try {
+      const info = await invoke<ScrapedBoothInfo>('scrape_booth', { url: assetUrl });
+      
+      setAssetInfo({
+        ...assetInfo,
+        name: info.name,
+        shopName: info.shop_name,
+        category: info.category,
+        description: info.description,
+        tags: info.tags,
+      });
+
+      if (info.thumbnail_base64) {
+        setThumbnailBase64(info.thumbnail_base64);
+      }
+    } catch (error) {
+      console.error('Failed to fetch info:', error);
+      alert('情報の取得に失敗しました。URLを確認してください。');
+    } finally {
+      setIsFetching(false);
+    }
   };
 
   // ファイル選択 (ZIPファイル)
@@ -166,6 +218,48 @@ export default function AssetRegisterPage() {
                 onChange={(e) => setAssetInfo({ ...assetInfo, description: e.target.value })}
                 placeholder='アセットに関するメモ'
               />
+            </div>
+
+            <div className='grid gap-2'>
+              <Label>タグ</Label>
+              <div className='flex flex-wrap gap-2 mb-1 max-h-[120px] overflow-y-auto p-1 border rounded-md bg-muted/10'>
+                {assetInfo.tags.length > 0 ? (
+                  assetInfo.tags.map((tag) => (
+                    <div
+                      key={tag}
+                      className='flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium border border-border shadow-xs h-fit'
+                    >
+                      {tag}
+                      <button
+                        type='button'
+                        onClick={() => handleRemoveTag(tag)}
+                        className='hover:text-destructive transition-colors ml-1'
+                      >
+                        <X className='size-3' />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className='text-xs text-muted-foreground italic py-1 px-1'>タグが設定されていません</p>
+                )}
+              </div>
+              <div className='flex gap-2'>
+                <Input
+                  placeholder='タグを追加...'
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  className='h-9'
+                />
+                <Button variant='outline' size='sm' onClick={handleAddTag} className='h-9'>
+                  追加
+                </Button>
+              </div>
             </div>
 
             <div className='grid gap-2'>
