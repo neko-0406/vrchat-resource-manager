@@ -206,8 +206,9 @@ export default function AssetRegisterPage() {
         </div>
 
         {/* 右側: アセット情報フォーム */}
-        <div className='flex flex-col gap-6 overflow-y-auto px-1 pr-4'>
-          <div className='grid gap-4'>
+        <div className='flex flex-col gap-6 overflow-hidden px-1 pr-4 min-h-0'>
+          {/* 基本情報エリア (スクロールさせない、または最小限) */}
+          <div className='grid gap-4 shrink-0 overflow-y-auto max-h-[60%] pr-2'>
             <div className='grid gap-2'>
               <Label htmlFor='name'>アセット名</Label>
               <Input
@@ -301,29 +302,33 @@ export default function AssetRegisterPage() {
                 </Button>
               </div>
             </div>
+          </div>
 
-            <div className='grid gap-2'>
-              <Label>登録するファイル (ZIP)</Label>
-              <div className='space-y-2'>
-                {files.map((file, index) => (
-                  <div key={index} className='flex items-center gap-2 p-2 rounded-md bg-muted border text-sm'>
-                    <Package className='size-4 text-muted-foreground shrink-0' />
-                    <span className='flex-1 truncate'>{file}</span>
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      className='size-7'
-                      onClick={() => setFiles(files.filter((_, i) => i !== index))}
-                    >
-                      <X className='size-4' />
-                    </Button>
-                  </div>
-                ))}
-                <Button variant='outline' className='w-full border-dashed' onClick={handleSelectFiles}>
-                  ファイルを指定...
-                </Button>
-              </div>
+          {/* ZIPファイル一覧エリア (独立してスクロール) */}
+          <div className='flex flex-col gap-2 flex-1 min-h-0'>
+            <Label className='shrink-0'>登録するファイル (ZIP)</Label>
+            <div className='flex-1 overflow-y-auto space-y-2 p-1 border rounded-md bg-muted/10 min-h-[100px]'>
+              {files.map((file, index) => (
+                <div key={index} className='flex items-center gap-2 p-2 rounded-md bg-muted border text-sm'>
+                  <Package className='size-4 text-muted-foreground shrink-0' />
+                  <span className='flex-1 truncate'>{file}</span>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='size-7'
+                    onClick={() => setFiles(files.filter((_, i) => i !== index))}
+                  >
+                    <X className='size-4' />
+                  </Button>
+                </div>
+              ))}
+              {files.length === 0 && (
+                <p className='text-xs text-muted-foreground italic p-2'>ファイルが選択されていません</p>
+              )}
             </div>
+            <Button variant='outline' className='w-full border-dashed shrink-0' onClick={handleSelectFiles}>
+              ファイルを指定...
+            </Button>
           </div>
         </div>
       </div>
