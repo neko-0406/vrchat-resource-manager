@@ -207,8 +207,8 @@ export default function AssetRegisterPage() {
 
         {/* 右側: アセット情報フォーム */}
         <div className='flex flex-col gap-6 overflow-hidden px-1 pr-4 min-h-0'>
-          {/* 基本情報エリア (スクロールさせない、または最小限) */}
-          <div className='grid gap-4 shrink-0 overflow-y-auto max-h-[60%] pr-2'>
+          {/* 基本情報エリア (スクロールさせず固定) */}
+          <div className='grid gap-4 shrink-0 pr-2'>
             <div className='grid gap-2'>
               <Label htmlFor='name'>アセット名</Label>
               <Input
