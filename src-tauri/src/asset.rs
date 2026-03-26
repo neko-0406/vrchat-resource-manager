@@ -86,15 +86,17 @@ pub async fn register_asset(
     }
 
     // 6. ファイルの処理
-    let config = state.config.lock().unwrap();
-    let base_path = &config.asset_data_folder;
+    let base_path = {
+        let config = state.config.lock().unwrap();
+        config.asset_data_folder.clone()
+    };
 
     if base_path.is_empty() {
         return Err("アセット保存先フォルダが設定されていません。アプリ設定から設定してください。".to_string());
     }
 
     // アセットごとの保存ディレクトリ作成
-    let asset_dir = std::path::Path::new(base_path).join(&asset_id);
+    let asset_dir = std::path::Path::new(&base_path).join(&asset_id);
     if !asset_dir.exists() {
         std::fs::create_dir_all(&asset_dir).map_err(|e| e.to_string())?;
     }
