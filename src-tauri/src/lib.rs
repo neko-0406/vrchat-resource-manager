@@ -23,7 +23,11 @@ fn get_config(state: State<'_, AppState>) -> AppSetting {
 }
 
 #[tauri::command]
-fn save_config(app: AppHandle, state: State<'_, AppState>, config: AppSetting) -> Result<(), String> {
+fn save_config(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    config: AppSetting,
+) -> Result<(), String> {
     let mut state_config = state.config.lock().unwrap();
     *state_config = config.clone();
 
@@ -42,7 +46,9 @@ pub fn run() {
 
             // DBの初期化（非同期実行を同期的に待機）
             let pool = tauri::async_runtime::block_on(async {
-                init_db(&handle).await.expect("failed to initialize database")
+                init_db(&handle)
+                    .await
+                    .expect("failed to initialize database")
             });
 
             // 起動時にファイルを読み込み
@@ -53,8 +59,12 @@ pub fn run() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_config, save_config, scrape_booth, register_asset])
+        .invoke_handler(tauri::generate_handler![
+            get_config,
+            save_config,
+            scrape_booth,
+            register_asset
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
-
