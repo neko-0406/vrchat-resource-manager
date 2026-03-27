@@ -63,13 +63,13 @@ export default function AssetPage(): React.ReactNode {
 
       <div className="flex-1 overflow-y-auto min-h-0 pr-2">
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {[...Array(8)].map((_, i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
+            {[...Array(12)].map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <div className="aspect-video bg-muted" />
-                <CardHeader className="space-y-2">
-                  <div className="h-4 bg-muted rounded w-3/4" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
+                <CardHeader className="p-2 space-y-2">
+                  <div className="h-3 bg-muted rounded w-3/4" />
+                  <div className="h-2 bg-muted rounded w-1/2" />
                 </CardHeader>
               </Card>
             ))}
@@ -80,7 +80,7 @@ export default function AssetPage(): React.ReactNode {
             <p>アセットが見つかりませんでした</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3 pb-4">
             {filteredAssets.map((asset) => (
               <Card key={asset.id} className="overflow-hidden hover:shadow-md transition-shadow">
                 <div className="aspect-video relative bg-muted border-b overflow-hidden group">
@@ -92,47 +92,42 @@ export default function AssetPage(): React.ReactNode {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                      <Package className="h-12 w-12 opacity-20" />
+                      <Package className="h-8 w-8 opacity-20" />
                     </div>
                   )}
                   {asset.category && (
-                    <div className="absolute top-2 right-2">
-                      <div className="bg-black/50 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider">
+                    <div className="absolute top-1 right-1">
+                      <div className="bg-black/50 backdrop-blur-sm text-white text-[8px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
                         {asset.category}
                       </div>
                     </div>
                   )}
                 </div>
-                <CardHeader className="p-3 space-y-1">
-                  <div className="flex justify-between items-start gap-2">
-                    <CardTitle className="text-sm font-bold line-clamp-1 flex-1">
+                <CardHeader className="p-2 space-y-0.5">
+                  <div className="flex justify-between items-start gap-1">
+                    <CardTitle className="text-[11px] font-bold line-clamp-1 flex-1 leading-tight">
                       {asset.name}
                     </CardTitle>
-                    {asset.version && (
-                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                        v{asset.version}
-                      </span>
-                    )}
                   </div>
-                  <div className="flex items-center text-xs text-muted-foreground">
-                    <ShoppingCart className="h-3 w-3 mr-1" />
+                  <div className="flex items-center text-[10px] text-muted-foreground">
+                    <ShoppingCart className="h-2.5 w-2.5 mr-1 shrink-0" />
                     <span className="line-clamp-1">{asset.shop_name || "Unknown Shop"}</span>
                   </div>
                 </CardHeader>
-                <CardContent className="px-3 pb-3 pt-0">
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {asset.tags.slice(0, 3).map((tag) => (
+                <CardContent className="px-2 pb-2 pt-0">
+                  <div className="flex flex-wrap gap-1 mt-0.5">
+                    {asset.tags.slice(0, 2).map((tag) => (
                       <div
                         key={tag}
-                        className="flex items-center bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded text-[10px]"
+                        className="flex items-center bg-secondary text-secondary-foreground px-1 py-0.5 rounded text-[9px]"
                       >
-                        <TagIcon className="h-2 w-2 mr-1" />
+                        <TagIcon className="h-2 w-2 mr-0.5" />
                         {tag}
                       </div>
                     ))}
-                    {asset.tags.length > 3 && (
-                      <div className="text-[10px] text-muted-foreground px-1">
-                        +{asset.tags.length - 3}
+                    {asset.tags.length > 2 && (
+                      <div className="text-[9px] text-muted-foreground px-0.5">
+                        +{asset.tags.length - 2}
                       </div>
                     )}
                   </div>
