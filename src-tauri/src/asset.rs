@@ -16,6 +16,99 @@ pub struct AssetRegisterRequest {
     pub file_paths: Vec<String>,
 }
 
+#[derive(Debug, serde::Serialize)]
+pub struct AssetResponse {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub category: Option<String>,
+    pub original_url: Option<String>,
+    pub thumbnail_base64: Option<String>,
+    pub version: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub shop_name: Option<String>,
+    pub tags: Vec<String>,
+}
+
+#[tauri::command]
+pub async fn get_assets(state: State<'_, AppState>) -> Result<Vec<AssetResponse>, String> {
+    let rows = sqlx::query(
+        r#"
+        SELECT 
+            a.id, a.name, a.description, a.category, a.original_url, 
+            a.thumbnail_base64, a.version, a.created_at, a.updated_at,
+            s.name as shop_name,
+            GROUP_CONCAT(t.name) as tags
+        FROM assets a
+        LEFT JOIN asset_shops ash ON a.id = ash.asset_id
+        LEFT JOIN shops s ON ash.shop_id = s.id
+        LEFT JOIN asset_tags at ON a.id = at.asset_id
+        LEFT JOIN tags t ON at.tag_id = t.id
+        GROUP BY a.id
+        ORDER BY a.created_at DESC
+        "#
+    )
+    .fetch_all(&state.db)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    let mut response = Vec::new();
+    for row in rows {
+        use sqlx::Row;
+        let tags_str: Option<String> = row.get("tags");
+        let tags = tags_str
+            .map(|s| s.split(',').map(|t| t.to_string()).collect())
+            .unwrap_or_else(Vec::new);
+
+        response.push(AssetResponse {
+            id: row.get("id"),
+            name: row.get("name"),
+            description: row.get("description"),
+            category: row.get("category"),
+            original_url: row.get("original_url"),
+            thumbnail_base64: row.get("thumbnail_base64"),
+            version: row.get("version"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+            shop_name: row.get("shop_name"),
+            tags,
+        });
+    }
+
+    Ok(response)
+}
+
+#[tauri::command]
+pub async fn open_asset_folder(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+    asset_id: String,
+) -> Result<(), String> {
+    use tauri_plugin_opener::OpenerExt;
+
+    let base_path = {
+        let config = state.config.lock().unwrap();
+        config.asset_data_folder.clone()
+    };
+
+    if base_path.is_empty() {
+        return Err("アセット保存先フォルダが設定されていません。".to_string());
+    }
+
+    let asset_dir = std::path::Path::new(&base_path).join(&asset_id);
+    if !asset_dir.exists() {
+        return Err("アセットのフォルダが見つかりません。".to_string());
+    }
+
+    let path_str = asset_dir.to_string_lossy().to_string();
+    app.opener()
+        .open_path(path_str, None::<String>)
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn register_asset(
     state: State<'_, AppState>,
