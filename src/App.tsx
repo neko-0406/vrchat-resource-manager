@@ -1,7 +1,5 @@
-import { BrowserRouter } from 'react-router';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import './App.css';
-import { Routes } from 'react-router';
-import { Route } from 'react-router';
 import AppLayout from './layout/AppLayout';
 import AssetPage from './page/AssetPage';
 import AssetRegisterPage from './page/AssetRegisterPage';
@@ -12,6 +10,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path='/' element={<AppLayout />}>
+          <Route index element={<Navigate to="/assets" replace />} />
           <Route path='assets' element={<AssetPage />} />
           <Route path='register' element={<AssetRegisterPage />} />
           <Route path='setting' element={<AppSettingPage />} />
