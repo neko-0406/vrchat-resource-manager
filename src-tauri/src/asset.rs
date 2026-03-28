@@ -80,6 +80,36 @@ pub async fn get_assets(state: State<'_, AppState>) -> Result<Vec<AssetResponse>
 }
 
 #[tauri::command]
+pub async fn open_asset_folder(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+    asset_id: String,
+) -> Result<(), String> {
+    use tauri_plugin_opener::OpenerExt;
+
+    let base_path = {
+        let config = state.config.lock().unwrap();
+        config.asset_data_folder.clone()
+    };
+
+    if base_path.is_empty() {
+        return Err("アセット保存先フォルダが設定されていません。".to_string());
+    }
+
+    let asset_dir = std::path::Path::new(&base_path).join(&asset_id);
+    if !asset_dir.exists() {
+        return Err("アセットのフォルダが見つかりません。".to_string());
+    }
+
+    let path_str = asset_dir.to_string_lossy().to_string();
+    app.opener()
+        .open_path(path_str, None::<String>)
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn register_asset(
     state: State<'_, AppState>,
     request: AssetRegisterRequest,

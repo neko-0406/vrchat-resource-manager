@@ -4,7 +4,7 @@ mod booth;
 mod db;
 
 use crate::app_setting::AppSetting;
-use crate::asset::{register_asset, get_assets};
+use crate::asset::{register_asset, get_assets, open_asset_folder};
 use crate::booth::scrape_booth;
 use crate::db::init_db;
 use sqlx::{Pool, Sqlite};
