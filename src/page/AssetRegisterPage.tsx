@@ -254,16 +254,17 @@ export default function AssetRegisterPage() {
               <Label htmlFor='description'>説明</Label>
               <Textarea
                 id='description'
-                rows={8}
+                rows={4}
                 value={assetInfo.description}
                 onChange={(e) => setAssetInfo({ ...assetInfo, description: e.target.value })}
                 placeholder='アセットに関するメモ'
+                className='resize-none'
               />
             </div>
 
             <div className='grid gap-2'>
               <Label>タグ</Label>
-              <div className='flex flex-wrap gap-2 mb-1 max-h-[120px] overflow-y-auto p-1 border rounded-md bg-muted/10'>
+              <div className='flex flex-wrap gap-2 mb-1 max-h-[80px] overflow-y-auto p-1 border rounded-md bg-muted/10'>
                 {assetInfo.tags.length > 0 ? (
                   assetInfo.tags.map((tag) => (
                     <div
