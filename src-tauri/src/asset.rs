@@ -238,3 +238,58 @@ pub async fn register_asset(
 
     Ok(asset_id)
 }
+
+#[tauri::command]
+pub async fn delete_assets(
+    state: State<'_, AppState>,
+    asset_ids: Vec<String>,
+) -> Result<(), String> {
+    let mut tx = state.db.begin().await.map_err(|e| e.to_string())?;
+
+    // 1. 設定から保存先フォルダを取得
+    let base_path = {
+        let config = state.config.lock().unwrap();
+        config.asset_data_folder.clone()
+    };
+
+    for asset_id in &asset_ids {
+        // 2. 関連するファイル情報の取得 (物理削除用)
+        let files: Vec<(i64, String)> = sqlx::query_as(
+            "SELECT f.id, f.file_path FROM files f 
+             JOIN asset_files af ON f.id = af.file_id 
+             WHERE af.asset_id = ?"
+        )
+        .bind(asset_id)
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+
+        // 3. assets テーブルから削除 (ON DELETE CASCADE により中間テーブルも削除される)
+        sqlx::query("DELETE FROM assets WHERE id = ?")
+            .bind(asset_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // 4. files テーブルからレコードを削除
+        for (file_id, _) in &files {
+            sqlx::query("DELETE FROM files WHERE id = ?")
+                .bind(file_id)
+                .execute(&mut *tx)
+                .await
+                .map_err(|e| e.to_string())?;
+        }
+
+        // 5. 物理フォルダの削除
+        if !base_path.is_empty() {
+            let asset_dir = std::path::Path::new(&base_path).join(asset_id);
+            if asset_dir.exists() {
+                std::fs::remove_dir_all(&asset_dir).map_err(|e| format!("フォルダの削除に失敗しました ({}): {}", asset_id, e))?;
+            }
+        }
+    }
+
+    tx.commit().await.map_err(|e| e.to_string())?;
+
+    Ok(())
+}
