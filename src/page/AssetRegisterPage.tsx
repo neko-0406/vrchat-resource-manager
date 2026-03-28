@@ -20,6 +20,7 @@ interface ScrapedBoothInfo {
 export default function AssetRegisterPage() {
   const [assetUrl, setAssetUrl] = useState('');
   const [isFetching, setIsFetching] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [thumbnailBase64, setThumbnailBase64] = useState<string | null>(null);
   const [assetInfo, setAssetInfo] = useState({
     name: '',
@@ -107,8 +108,9 @@ export default function AssetRegisterPage() {
 
   // アセット登録処理
   const handleRegister = async () => {
-    if (!assetInfo.name || isFetching) return;
+    if (!assetInfo.name || isFetching || isSubmitting) return;
 
+    setIsSubmitting(true);
     try {
       await invoke('register_asset', {
         request: {
@@ -141,6 +143,8 @@ export default function AssetRegisterPage() {
     } catch (error) {
       console.error('Failed to register asset:', error);
       alert('登録に失敗しました。');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -148,9 +152,9 @@ export default function AssetRegisterPage() {
     <div className='flex h-full max-h-screen flex-col overflow-hidden p-8 gap-6'>
       <div className='flex items-center justify-between shrink-0'>
         <h1 className='text-3xl font-bold'>アセット登録</h1>
-        <Button size='lg' disabled={!assetInfo.name || isFetching} onClick={handleRegister}>
-          {isFetching ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-          アセットを登録
+        <Button size='lg' disabled={!assetInfo.name || isFetching || isSubmitting} onClick={handleRegister}>
+          {isSubmitting ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+          {isSubmitting ? '登録中...' : 'アセットを登録'}
         </Button>
       </div>
 
