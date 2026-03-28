@@ -2,8 +2,17 @@ import { useEffect, useState, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Package, ShoppingCart, Tag as TagIcon, FolderOpen, Check } from "lucide-react";
+import { Search, Package, ShoppingCart, Tag as TagIcon, FolderOpen, Check, ExternalLink, Calendar, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 interface Asset {
   id: string;
@@ -24,6 +33,7 @@ export default function AssetPage(): React.ReactNode {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
 
   useEffect(() => {
     loadAssets();
@@ -50,7 +60,8 @@ export default function AssetPage(): React.ReactNode {
     }
   };
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setSelectedIds(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
@@ -129,14 +140,26 @@ export default function AssetPage(): React.ReactNode {
             {filteredAssets.map((asset) => (
               <Card 
                 key={asset.id} 
-                className={`overflow-hidden transition-all duration-200 cursor-pointer border-2 ${
+                className={`overflow-hidden transition-all duration-200 cursor-pointer border-2 relative group ${
                   selectedIds.includes(asset.id) 
                     ? "border-primary shadow-md bg-primary/5" 
                     : "hover:shadow-md border-transparent"
                 }`}
-                onClick={() => toggleSelect(asset.id)}
+                onClick={() => setViewingAsset(asset)}
               >
-                <div className="aspect-video relative bg-muted border-b overflow-hidden group">
+                {/* 選択用のチェックエリア */}
+                <div 
+                  className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all ${
+                    selectedIds.includes(asset.id) 
+                      ? "bg-primary text-primary-foreground opacity-100" 
+                      : "bg-black/20 text-white opacity-0 group-hover:opacity-100 hover:bg-black/40"
+                  }`}
+                  onClick={(e) => toggleSelect(asset.id, e)}
+                >
+                  <Check className={`h-4 w-4 ${selectedIds.includes(asset.id) ? "opacity-100" : "opacity-50"}`} />
+                </div>
+
+                <div className="aspect-video relative bg-muted border-b overflow-hidden">
                   {asset.thumbnail_base64 ? (
                     <img
                       src={`data:image/png;base64,${asset.thumbnail_base64}`}
@@ -155,11 +178,6 @@ export default function AssetPage(): React.ReactNode {
                       </div>
                     </div>
                   )}
-                  {selectedIds.includes(asset.id) && (
-                    <div className="absolute top-1 left-1 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm">
-                      <Check className="h-3 w-3" />
-                    </div>
-                  )}
                 </div>
                 <CardHeader className="p-2 space-y-0.5">
                   <div className="flex justify-between items-start gap-1">
@@ -169,7 +187,7 @@ export default function AssetPage(): React.ReactNode {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-5 w-5 -mt-0.5 -mr-1 text-muted-foreground hover:text-primary"
+                      className="h-5 w-5 -mt-0.5 -mr-1 text-muted-foreground hover:text-primary z-10"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleOpenFolder(asset.id);
@@ -207,6 +225,120 @@ export default function AssetPage(): React.ReactNode {
           </div>
         )}
       </div>
+
+      {/* アセット詳細ダイアログ */}
+      <Dialog open={!!viewingAsset} onOpenChange={(open) => !open && setViewingAsset(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {viewingAsset && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1 uppercase font-bold tracking-wider">
+                  <Package className="h-3 w-3" />
+                  <span>{viewingAsset.category || "General"}</span>
+                  {viewingAsset.version && (
+                    <>
+                      <Separator orientation="vertical" className="h-3" />
+                      <span>v{viewingAsset.version}</span>
+                    </>
+                  )}
+                </div>
+                <DialogTitle className="text-2xl font-bold leading-tight">
+                  {viewingAsset.name}
+                </DialogTitle>
+                <div className="flex items-center text-sm text-muted-foreground mt-1">
+                  <ShoppingCart className="h-4 w-4 mr-1.5" />
+                  <span className="font-medium text-foreground">{viewingAsset.shop_name || "Unknown Shop"}</span>
+                </div>
+              </DialogHeader>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                <div className="space-y-4">
+                  <div className="aspect-video relative rounded-lg border bg-muted overflow-hidden">
+                    {viewingAsset.thumbnail_base64 ? (
+                      <img
+                        src={`data:image/png;base64,${viewingAsset.thumbnail_base64}`}
+                        alt={viewingAsset.name}
+                        className="object-cover w-full h-full"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-4xl">
+                        <Package className="h-20 w-20 opacity-10" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {viewingAsset.tags.map((tag) => (
+                      <div
+                        key={tag}
+                        className="flex items-center bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs font-medium"
+                      >
+                        <TagIcon className="h-3 w-3 mr-1" />
+                        {tag}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col gap-2 pt-2">
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3 mr-1.5" />
+                      <span>登録日: {new Date(viewingAsset.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                      <Info className="h-4 w-4 text-primary" />
+                      説明
+                    </h4>
+                    <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-md border min-h-[100px] whitespace-pre-wrap leading-relaxed">
+                      {viewingAsset.description || "説明はありません。"}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 pt-2">
+                    <Button 
+                      className="w-full justify-start gap-2 h-10 text-sm" 
+                      onClick={() => handleOpenFolder(viewingAsset.id)}
+                    >
+                      <FolderOpen className="h-4 w-4" />
+                      フォルダを開く
+                    </Button>
+                    
+                    {viewingAsset.original_url && (
+                      <Button variant="outline" className="w-full justify-start gap-2 h-10 text-sm" asChild>
+                        <a href={viewingAsset.original_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                          Booth で商品ページを見る
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter className="sm:justify-between border-t pt-4">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={selectedIds.includes(viewingAsset.id) ? "default" : "outline"}
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => toggleSelect(viewingAsset.id)}
+                  >
+                    <Check className={`h-4 w-4 ${selectedIds.includes(viewingAsset.id) ? "opacity-100" : "opacity-40"}`} />
+                    {selectedIds.includes(viewingAsset.id) ? "選択中" : "選択する"}
+                  </Button>
+                </div>
+                <Button variant="ghost" onClick={() => setViewingAsset(null)}>
+                  閉じる
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
