@@ -4,7 +4,7 @@ mod booth;
 mod db;
 
 use crate::app_setting::AppSetting;
-use crate::asset::{register_asset, get_assets, open_asset_folder};
+use crate::asset::{register_asset, get_assets, open_asset_folder, delete_assets};
 use crate::booth::scrape_booth;
 use crate::db::init_db;
 use sqlx::{Pool, Sqlite};
@@ -65,7 +65,8 @@ pub fn run() {
             scrape_booth,
             register_asset,
             get_assets,
-            open_asset_folder
+            open_asset_folder,
+            delete_assets
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
