@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Package, ShoppingCart, Tag as TagIcon } from "lucide-react";
+import { Search, Package, ShoppingCart, Tag as TagIcon, FolderOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Asset {
   id: string;
@@ -36,6 +37,15 @@ export default function AssetPage(): React.ReactNode {
       console.error("Failed to fetch assets:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenFolder = async (id: string) => {
+    try {
+      await invoke("open_asset_folder", { assetId: id });
+    } catch (error) {
+      console.error("Failed to open folder:", error);
+      alert(`エラー: ${error}`);
     }
   };
 
@@ -108,6 +118,18 @@ export default function AssetPage(): React.ReactNode {
                     <CardTitle className="text-[11px] font-bold line-clamp-1 flex-1 leading-tight">
                       {asset.name}
                     </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 -mt-0.5 -mr-1 text-muted-foreground hover:text-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenFolder(asset.id);
+                      }}
+                      title="フォルダを開く"
+                    >
+                      <FolderOpen className="h-3 w-3" />
+                    </Button>
                   </div>
                   <div className="flex items-center text-[10px] text-muted-foreground">
                     <ShoppingCart className="h-2.5 w-2.5 mr-1 shrink-0" />

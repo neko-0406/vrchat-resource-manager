@@ -64,7 +64,8 @@ pub fn run() {
             save_config,
             scrape_booth,
             register_asset,
-            get_assets
+            get_assets,
+            open_asset_folder
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
