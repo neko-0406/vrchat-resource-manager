@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Package, ShoppingCart, Tag as TagIcon, FolderOpen, Check, ExternalLink, Calendar, Info } from "lucide-react";
+import { Search, Package, ShoppingCart, Tag as TagIcon, FolderOpen, Check, ExternalLink, Calendar, Info, Filter, X, ListFilter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +13,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 
 interface Asset {
   id: string;
@@ -32,6 +38,8 @@ export default function AssetPage(): React.ReactNode {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFilterTags, setSelectedFilterTags] = useState<string[]>([]);
+  const [filterMode, setFilterMode] = useState<'AND' | 'OR'>('AND');
   const [loading, setLoading] = useState(true);
   const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
 
@@ -75,17 +83,63 @@ export default function AssetPage(): React.ReactNode {
     }
   };
 
+  const toggleFilterTag = (tag: string) => {
+    setSelectedFilterTags(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
+  // 全アセットから一意のタグリストを取得
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    assets.forEach(asset => asset.tags.forEach(tag => tagSet.add(tag)));
+    return Array.from(tagSet).sort();
+  }, [assets]);
+
   const filteredAssets = useMemo(() => {
     return assets.filter((asset) => {
+      // テキスト検索 (AND条件)
       const searchContent = `${asset.name} ${asset.shop_name || ""} ${asset.tags.join(" ")} ${asset.category || ""}`.toLowerCase();
-      return searchContent.includes(searchQuery.toLowerCase());
+      const matchesText = searchContent.includes(searchQuery.toLowerCase());
+      
+      if (!matchesText) return false;
+
+      // タグフィルタ (AND/OR条件)
+      if (selectedFilterTags.length === 0) return true;
+
+      if (filterMode === 'AND') {
+        return selectedFilterTags.every(tag => asset.tags.includes(tag));
+      } else {
+        return selectedFilterTags.some(tag => asset.tags.includes(tag));
+      }
     });
-  }, [assets, searchQuery]);
+  }, [assets, searchQuery, selectedFilterTags, filterMode]);
 
   return (
     <div className="flex flex-col h-full space-y-4 p-4 overflow-hidden relative">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">アセット一覧</h1>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold leading-none">アセット一覧</h1>
+          {selectedFilterTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              {selectedFilterTags.map(tag => (
+                <Badge key={tag} variant="secondary" className="px-1.5 py-0 h-5 text-[10px] gap-1">
+                  {tag}
+                  <button onClick={() => toggleFilterTag(tag)} className="hover:text-destructive">
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </Badge>
+              ))}
+              <button 
+                onClick={() => setSelectedFilterTags([])}
+                className="text-[10px] text-muted-foreground hover:text-primary underline px-1"
+              >
+                クリア
+              </button>
+            </div>
+          )}
+        </div>
+        
         <div className="flex items-center gap-2">
           <div className="flex items-center h-9">
             {selectedIds.length > 0 && (
@@ -102,14 +156,88 @@ export default function AssetPage(): React.ReactNode {
               </div>
             )}
           </div>
-          <Button variant="outline" size="sm" className="h-8 text-[11px] px-3" onClick={handleSelectAll}>
-            {selectedIds.length === filteredAssets.length && filteredAssets.length > 0 ? "選択解除" : "すべて選択"}
-          </Button>
-          <div className="relative w-80 ml-2">
+          
+          <div className="flex items-center gap-1.5 bg-muted/50 p-1 rounded-lg border">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant={selectedFilterTags.length > 0 ? "secondary" : "ghost"} size="sm" className="h-7 px-2 gap-1.5 text-xs">
+                  <Filter className="h-3.5 w-3.5" />
+                  <span>タグ</span>
+                  {selectedFilterTags.length > 0 && (
+                    <Badge variant="default" className="h-4 min-w-4 px-1 text-[9px] flex items-center justify-center">
+                      {selectedFilterTags.length}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-sm flex items-center gap-2">
+                      <TagIcon className="h-3.5 w-3.5" />
+                      タグで絞り込み
+                    </h4>
+                    <div className="flex bg-muted rounded-md p-0.5 border">
+                      <button
+                        onClick={() => setFilterMode('AND')}
+                        className={`text-[10px] px-2 py-0.5 rounded transition-all ${filterMode === 'AND' ? 'bg-background shadow-sm font-bold' : 'text-muted-foreground'}`}
+                      >
+                        AND
+                      </button>
+                      <button
+                        onClick={() => setFilterMode('OR')}
+                        className={`text-[10px] px-2 py-0.5 rounded transition-all ${filterMode === 'OR' ? 'bg-background shadow-sm font-bold' : 'text-muted-foreground'}`}
+                      >
+                        OR
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="max-h-[300px] overflow-y-auto pr-1">
+                    <div className="flex flex-wrap gap-1.5">
+                      {allTags.length > 0 ? (
+                        allTags.map(tag => (
+                          <button
+                            key={tag}
+                            onClick={() => toggleFilterTag(tag)}
+                            className={`flex items-center px-2 py-1 rounded-md text-xs transition-colors border ${
+                              selectedFilterTags.includes(tag)
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-muted/50 hover:bg-muted border-transparent"
+                            }`}
+                          >
+                            {tag}
+                          </button>
+                        ))
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic p-2">タグが見つかりません</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {selectedFilterTags.length > 0 && (
+                    <div className="flex justify-end pt-2 border-t mt-2">
+                      <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => setSelectedFilterTags([])}>
+                        リセット
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Separator orientation="vertical" className="h-4" />
+
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={handleSelectAll}>
+              {selectedIds.length === filteredAssets.length && filteredAssets.length > 0 ? "選択解除" : "すべて選択"}
+            </Button>
+          </div>
+
+          <div className="relative w-72">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="アセット、ショップ、タグで検索..."
-              className="pl-9"
+              placeholder="検索..."
+              className="pl-9 h-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
