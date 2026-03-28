@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Package, ShoppingCart, Tag as TagIcon, FolderOpen, Check, ExternalLink, Calendar, Info, Filter, X, ListFilter } from "lucide-react";
+import { Search, Package, ShoppingCart, Tag as TagIcon, FolderOpen, Check, ExternalLink, Calendar, Info, Filter, X, Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,7 +41,9 @@ export default function AssetPage(): React.ReactNode {
   const [selectedFilterTags, setSelectedFilterTags] = useState<string[]>([]);
   const [filterMode, setFilterMode] = useState<'AND' | 'OR'>('AND');
   const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     loadAssets();
@@ -65,6 +67,28 @@ export default function AssetPage(): React.ReactNode {
     } catch (error) {
       console.error("Failed to open folder:", error);
       alert(`エラー: ${error}`);
+    }
+  };
+
+  const handleDeleteAssets = async () => {
+    if (selectedIds.length === 0) return;
+
+    try {
+      setIsDeleting(true);
+      await invoke("delete_assets", { assetIds: selectedIds });
+      
+      // 一覧を再読み込み
+      await loadAssets();
+      // 選択をクリア
+      setSelectedIds([]);
+      // ダイアログを閉じる
+      setShowDeleteConfirm(false);
+      alert(`${selectedIds.length}件のアセットを削除しました。`);
+    } catch (error) {
+      console.error("Failed to delete assets:", error);
+      alert(`削除に失敗しました: ${error}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -152,6 +176,14 @@ export default function AssetPage(): React.ReactNode {
                   onClick={() => setSelectedIds([])}
                 >
                   解除
+                </button>
+                <div className="w-px h-3.5 bg-primary/20 mx-1" />
+                <button 
+                  className="hover:text-destructive font-semibold text-[11px] flex items-center gap-1" 
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <Trash2 className="h-3 w-3" />
+                  削除
                 </button>
               </div>
             )}
@@ -465,6 +497,33 @@ export default function AssetPage(): React.ReactNode {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 削除確認ダイアログ */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-destructive mb-2">
+              <AlertTriangle className="h-5 w-5" />
+              <DialogTitle>アセットの削除</DialogTitle>
+            </div>
+            <DialogDescription>
+              選択された {selectedIds.length} 件のアセットを削除しますか？
+              <br />
+              <strong className="text-destructive">この操作により、データベースのレコードだけでなく、OS上のアセットフォルダも完全に削除されます。</strong>
+              この操作は取り消せません。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>
+              キャンセル
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteAssets} disabled={isDeleting} className="gap-2">
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              削除する
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
