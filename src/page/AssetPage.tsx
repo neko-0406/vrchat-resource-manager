@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Package, ShoppingCart, Tag as TagIcon, FolderOpen } from "lucide-react";
+import { Search, Package, ShoppingCart, Tag as TagIcon, FolderOpen, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Asset {
@@ -21,6 +21,7 @@ interface Asset {
 
 export default function AssetPage(): React.ReactNode {
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -49,6 +50,20 @@ export default function AssetPage(): React.ReactNode {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === filteredAssets.length && filteredAssets.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredAssets.map(a => a.id));
+    }
+  };
+
   const filteredAssets = useMemo(() => {
     return assets.filter((asset) => {
       const searchContent = `${asset.name} ${asset.shop_name || ""} ${asset.tags.join(" ")} ${asset.category || ""}`.toLowerCase();
@@ -57,17 +72,37 @@ export default function AssetPage(): React.ReactNode {
   }, [assets, searchQuery]);
 
   return (
-    <div className="flex flex-col h-full space-y-4 p-4 overflow-hidden">
+    <div className="flex flex-col h-full space-y-4 p-4 overflow-hidden relative">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">アセット一覧</h1>
-        <div className="relative w-80">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="アセット、ショップ、タグで検索..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="flex items-center gap-2">
+          <div className="flex items-center h-9">
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-2 mr-3 bg-primary/10 text-primary px-3 py-1 rounded-md border border-primary/20 text-xs animate-in fade-in zoom-in duration-200">
+                <span className="font-bold">{selectedIds.length}</span>
+                <span>件 選択中</span>
+                <div className="w-px h-3.5 bg-primary/20 mx-1" />
+                <button 
+                  className="hover:underline font-semibold text-[11px]" 
+                  onClick={() => setSelectedIds([])}
+                >
+                  解除
+                </button>
+              </div>
+            )}
+          </div>
+          <Button variant="outline" size="sm" className="h-8 text-[11px] px-3" onClick={handleSelectAll}>
+            {selectedIds.length === filteredAssets.length && filteredAssets.length > 0 ? "選択解除" : "すべて選択"}
+          </Button>
+          <div className="relative w-80 ml-2">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="アセット、ショップ、タグで検索..."
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
@@ -92,7 +127,15 @@ export default function AssetPage(): React.ReactNode {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3 pb-4">
             {filteredAssets.map((asset) => (
-              <Card key={asset.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              <Card 
+                key={asset.id} 
+                className={`overflow-hidden transition-all duration-200 cursor-pointer border-2 ${
+                  selectedIds.includes(asset.id) 
+                    ? "border-primary shadow-md bg-primary/5" 
+                    : "hover:shadow-md border-transparent"
+                }`}
+                onClick={() => toggleSelect(asset.id)}
+              >
                 <div className="aspect-video relative bg-muted border-b overflow-hidden group">
                   {asset.thumbnail_base64 ? (
                     <img
@@ -110,6 +153,11 @@ export default function AssetPage(): React.ReactNode {
                       <div className="bg-black/50 backdrop-blur-sm text-white text-[8px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
                         {asset.category}
                       </div>
+                    </div>
+                  )}
+                  {selectedIds.includes(asset.id) && (
+                    <div className="absolute top-1 left-1 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm">
+                      <Check className="h-3 w-3" />
                     </div>
                   )}
                 </div>
